@@ -5,7 +5,7 @@ This package contains an implementation of the algorithm proposed in
 
 J.-F. Lalonde, S. G. Narasimhan, and A. A. Efros. What do the sun and the 
 sky tell us about the camera?  International Journal on Computer Vision, 
-88(1):24?51, May 2010.
+88(1):24--51, May 2010.
 
 J.-F. Lalonde, S. G. Narasimhan, and A. A. Efros. What does the sky tell 
 us about the camera?  In European Conference on Computer Vision, 2008.
