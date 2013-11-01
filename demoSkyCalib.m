@@ -54,11 +54,13 @@ end
 % initialize horizon to lowest sky row
 [rSky, cSky] = find(skyMask);
 yh0 = ypVec(max(rSky(:)), 1) - 1;
+f0 = 500;
+theta0 = pi/2+atan2(yh0, f0);
 
 % estimate parameters
 fprintf('\nEstimating focal and horizon...');
-[focalLength, horizonLine] = fitFocalAndZenith(xp, yp, lp', yh0);
-zenithAngle = pi/2+atan2(horizonLine, focalLength);
+[focalLength, zenithAngle] = fitFocalAndZenith(xp, yp, lp', theta0, f0);
+% zenithAngle = pi/2+atan2(horizonLine, focalLength);
 fprintf('done.\n');
 
 fprintf('Estimated focal length: %.2f px\n', focalLength);
@@ -89,7 +91,7 @@ end
 
 % estimate parameters
 fprintf('\nEstimating azimuth angle...');
-azimuthAngle = fitAzimuth(xp, yp, lp, focalLength, horizonLine, sunAzimuths, sunZeniths); 
+azimuthAngle = fitAzimuth(xp, yp, lp, focalLength, zenithAngle, sunAzimuths, sunZeniths); 
 fprintf('done.\n');
 
 fprintf('Estimated azimuth angle: %.2f deg\n', azimuthAngle*180/pi);

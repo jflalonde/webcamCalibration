@@ -16,7 +16,7 @@
 %  - lzOpt: estimated scale factors
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function [phiOpt, lzOpt] = fitAzimuth(xp, yp, lp, f0, yh0, phiSun, thetaSun)
+function [phiOpt, lzOpt] = fitAzimuth(xp, yp, lp, f0, theta, phiSun, thetaSun)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Copyright 2006-2010 Jean-Francois Lalonde
 % Carnegie Mellon University
@@ -39,7 +39,7 @@ lb = [-inf zeros(1, length(lz0))];
 ub = [inf inf.*ones(1, length(lz0))];
 
 f = f0;
-yh = yh0;
+% yh = yh0;
 
 % initial guess for sun-camera angle
 phiRange = 0:pi/2:3*pi/2;
@@ -71,27 +71,12 @@ lzOpt = xOpt(mInd,2:end);
         lz = reshape(x(2:end), size(xp));
         
         % compute the full-sky luminance ratio
-        ratio = arrayfun(@(xp, yp, lz, phiSun, thetaSun) exactSkyModelRatio(a, b, c, d, e, f, xp{1}, yp{1}, yh, lz, phi, phiSun{1}, thetaSun{1}), xp, yp, lz, phiSun, thetaSun, 'UniformOutput', 0);
+        ratio = arrayfun(@(xp, yp, lz, phiSun, thetaSun) exactSkyModelRatio(a, b, c, d, e, f, xp{1}, yp{1}, lz, theta, phi, phiSun{1}, thetaSun{1}), xp, yp, lz, phiSun, thetaSun, 'UniformOutput', 0);
 
         F = cellfun(@(lp, r) lp - r, lp, ratio, 'UniformOutput', 0);
         
         % get single vector for F
         F = cell2mat(F')';
-    end
-
-
-    % function that we're trying to optimize
-    function F = optAll(x)
-        f = x(1); yh = x(2); phi = x(3);
-        lz = mat2cell(x(4:end), 1, ones(size(x(4:end)))); % different for each image
-
-        % compute the full-sky luminance ratio
-        ratio = cellfun(@(xp, yp, lz, phiSun, thetaSun) exactSkyModelRatio(a, b, c, d, e, f, xp, yp, yh, lz, phi, phiSun, thetaSun), xp', yp', lz', phiSun, thetaSun, 'UniformOutput', 0);
-
-        F = cellfun(@(lp, r) lp - r, lp, ratio, 'UniformOutput', 0);
-        
-        % get single vector for F
-        F = cell2mat(F)';
     end
 end
 

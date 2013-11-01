@@ -16,7 +16,7 @@
 %  - lzOpt: estimated scale factors
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function [fOpt, yhOpt, lzOpt] = fitFocalAndZenith(xp, yp, lp, yh0, f0)
+function [fOpt, thetaOpt, lzOpt] = fitFocalAndZenith(xp, yp, lp, theta0, f0)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Copyright 2006-2010 Jean-Francois Lalonde
 % Carnegie Mellon University
@@ -38,11 +38,11 @@ end
 lz0 = ones(1, length(lp)); 
 
 % setup starting point
-x0 = [f0 yh0 lz0];
+x0 = [f0 theta0 lz0];
 
 % setup bounds
-lb = [1 -inf zeros(1, length(lz0))]; % focal length cannot be negative or 0
-ub = [inf yh0 inf.*ones(1, length(lz0))]; % horizon cannot be in the sky
+lb = [1 0 zeros(1, length(lz0))]; % focal length cannot be negative or 0
+ub = [inf theta0 inf.*ones(1, length(lz0))]; % horizon cannot be in the sky
 
 optFn = @optLuminanceFocalHorizonExact;
 
@@ -51,16 +51,16 @@ options = optimset('Display', 'off', 'Jacobian', 'off');
 xOpt = lsqnonlin(optFn, x0, lb, ub, options);
 
 fOpt = xOpt(1);
-yhOpt = xOpt(2);
+thetaOpt = xOpt(2);
 lzOpt = xOpt(3:end);
 
     % optimizes the focal length, the horizon line, and the zenith luminances
     function F = optLuminanceFocalHorizonExact(x)
-        f = x(1); yh = x(2); 
+        f = x(1); theta = x(2); 
         lz = mat2cell(x(3:end), 1, ones(size(x(3:end)))); % different for each image
 
         % compute the luminance ratio
-        ratio = cellfun(@(xp, yp, lz) exactGradientModelRatio(a, b, f, xp, yp, yh, lz), xp', yp', lz', 'UniformOutput', 0);
+        ratio = cellfun(@(xp, yp, lz) exactGradientModelRatio(a, b, f, xp, yp, theta, lz), xp', yp', lz', 'UniformOutput', 0);
         
         F = cellfun(@(lp, r) lp - r, lp, ratio, 'UniformOutput', 0);
 
