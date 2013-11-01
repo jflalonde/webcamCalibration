@@ -1,6 +1,14 @@
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% function [xp, yp, lp] = loadImageInformation(imgPath, invCamResponse, skyMask, xp, yp, nbRandomPixelsToKeep)
-%  Loads image information necessary for the sky fitting stages.
+function [xp, yp, lp] = loadImageInformation(imgPath, invCamResponse, ...
+    skyMask, xp, yp, nbRandomPixelsToKeep, varargin)
+% Loads image information necessary for the sky fitting stages.
+%
+%   [xp, yp, lp] = loadImageInformation(imgPath, invCamResponse, ...
+%       skyMask, xp, yp, nbRandomPixelsToKeep, ...)
+%
+%   [xp, yp, lp] = loadImageInformation(img, invCamResponse, ...
+%       skyMask, xp, yp, nbRandomPixelsToKeep, varargin)
+%
+% Supports both the path to the image, or the image itself.
 %
 % Input parameters:
 %  - imgPath: path to the input image
@@ -15,34 +23,48 @@
 %  - yp: y-coordinates of all input pixels (with respect to the center of the image, y-axis pointing up
 %  - lp: raw luminance values observed at each pixel
 %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function [xp, yp, lp] = loadImageInformation(imgPath, invCamResponse, skyMask, xp, yp, nbRandomPixelsToKeep)
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Copyright 2006-2010 Jean-Francois Lalonde
-% Carnegie Mellon University
-% Do not distribute
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% ----------
+% Jean-Francois Lalonde
 
-%% Read and correct the image
-origImg = im2double(imread(imgPath));
+% saturation threshold
+threshUnSat = 254/255;
+
+% darkness threshold 
+threshDark = 2/255;
+
+% use luminance only?
+luminanceOnly = true;
+
+parseVarargin(varargin{:});
+
+% Read and correct the image
+if ischar(imgPath)
+    % we're given the image's path
+    origImg = im2double(imread(imgPath));
+else
+    % we're given the image directly
+    origImg = im2double(imgPath);
+end
 
 % correct for non-linearities
 img = correctImage(origImg, invCamResponse);
-imgLuminance = rgb2gray(img);
 
-%% Find correctly exposed sky pixels
-threshUnSat = 254/255;
-indUnSat = img(:,:,1) < threshUnSat & img(:,:,2) < threshUnSat & img(:,:,3) < threshUnSat;
+if luminanceOnly
+    img = rgb2gray(img);
+end
+img = reshape(img, [], size(img, 3));
 
-threshDark = 2/255;
-indDark = img(:,:,1) > threshDark & img(:,:,2) > threshDark & img(:,:,3) > threshDark;
+% Find correctly exposed sky pixels
+indUnSat = any(img < threshUnSat, 2);
+indDark = any(img > threshDark, 2);
 
 indPx = indUnSat & indDark;
-indUnSatSky = find(indPx & skyMask); 
+indUnSatSky = find(indPx & skyMask(:)); 
 
-%% Keep randomly chosen pixels only
+% Keep randomly chosen pixels only
 randInd = randperm(length(indUnSatSky)); randInd = randInd(1:nbRandomPixelsToKeep);
 
-lp = imgLuminance(indUnSatSky(randInd));
+lp = img(indUnSatSky(randInd), :);
 xp = xp(indUnSatSky(randInd));
 yp = yp(indUnSatSky(randInd));
+
